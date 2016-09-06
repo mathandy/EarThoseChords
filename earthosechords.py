@@ -112,12 +112,15 @@ def play_progression(prog, key, octaves=None, Ioctave=4, delay=1.0, Iup = "I"):
             for x in chord:
                 x.octave += d
         elif Ioctave:  # make sure notes are all at least pitch of that 'I' root
+            while int(chord[0]) > I_val:
+                for x in chord:
+                    x.octave_down()
             while int(chord[0]) < I_val:
                 for x in chord:
                     x.octave_up()
         if numeral == "Iup":
             for x in chord:
-                x.octave += 1
+                x.octave_up()
 
         chords.append(chord)
 
