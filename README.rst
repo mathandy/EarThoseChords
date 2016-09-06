@@ -21,6 +21,7 @@ Options
 $ python earthosechords.py -f some_font.sf2
 
 **To see more options, type**
+
 $ man python earthosechords.py 
 
 Note: All options, with the exception of changing the sound font file, are also available through (and listed in) the text-based user interface.
