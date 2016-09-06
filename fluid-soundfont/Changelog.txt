@@ -1,0 +1,4 @@
+FluidR3 GM Soundfont Changes Log
+Date     Version    Author          Action
+20/06/13   2.2      Church Organist Missing note (#94) added to Violin and range extended to G7 (MIDI#103) 
+                                    for compatibility with MuseScore 2
