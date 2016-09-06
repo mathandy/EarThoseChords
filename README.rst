@@ -28,10 +28,9 @@ Note: All options, with the exception of changing the sound font file, are also 
 Prerequisites
 -------------
 -  **python 2.x**
--  **numpy**
--  **scipy**
--  **svgwrite**
--  **svgpathtools**
+-  **mingus**
+-  **sequencer**
+-  **fluidsynth**
 
 Setup
 -----
@@ -58,7 +57,7 @@ On OS X (assuming you have Homebrew installed):
 $ brew install fluidsynth
 
 On Windows:
-??? I dunno --  I'd recommend googling "fluidsynth binary" unless you are comfortable compiling the source yourself.  If someone finds an easy way, please let me know and I'll update this.
+I'm not sure the easiest, way -- I'd recommend googling "fluidsynth binary" unless you are comfortable compiling the source yourself.  If someone finds an easy way, please let me know and I'll update this.
 
 For Help
 --------
