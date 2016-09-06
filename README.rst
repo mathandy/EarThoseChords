@@ -1,5 +1,5 @@
 EarThoseChords
-============
+==============
 
 EarThoseChords is a tool to help musicians learn to recognized the root of chords based on it's distance from the tonic of the key.  The motivation for this code came from the success the author has had learning melodic dictation using Alain Benbassat's method as found in the Android App "Functional Ear Trainer" by Serhii Korchan.  
 If you enjoy this software, please consider making a donation to Alain Benbassat on his website www.miles.be.
@@ -44,6 +44,7 @@ Note: If you have a **Mac** or are running **Linux**, you already have Python 2.
 This is easy using pip (which typically comes with Python).  Just open up a terminal/command-prompt and enter the following two commands (without the $).
 
 $ pip install mingus
+
 $ pip install sequencer
 
 **3. Download and install fluidsynth** (from http://www.fluidsynth.org/).
@@ -51,9 +52,11 @@ $ pip install sequencer
 This is easy through a linux/mac package manager.
 
 On Linux:
+
 $ sudo apt-get install fluidsynth
 
 On OS X (assuming you have Homebrew installed):
+
 $ brew install fluidsynth
 
 On Windows:
