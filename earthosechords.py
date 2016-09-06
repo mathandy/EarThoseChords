@@ -253,7 +253,7 @@ if __name__ == '__main__':
         print("Note: At any time enter \n"
               "'m' to hear the melodic chord,\n"
               "'cad' to hear the cadence,\n"
-              "'d' to change the delay between chords,\n"
+              "'w' to change the delay between chords,\n"
               "'s' to toggle between hearing triads and hearing seventh chords,\n"
               "'k' to change the key, or \n"
               "'o' to toggle between using one octave or many.")
@@ -336,7 +336,7 @@ if __name__ == '__main__':
                 time.sleep(DELAY/2)
             newchord = False
             continue
-        elif ans == "d":
+        elif ans == "w":
             DELAY = int(input("Enter the desired delay time (in seconds): "))
             continue
         elif ans == "s":
