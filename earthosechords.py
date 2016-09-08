@@ -34,7 +34,7 @@ from mingus.containers import NoteContainer, Note
 # Octaves possible to use with soundfont 
 # Note: leave a buffer of one octave on each side
 octaves = range(1, 8)  # if many_octaves flag invoked
-
+DEFAULT_IOCTAVE = 4
 
 # User Arguments
 def get_user_args():
@@ -125,7 +125,6 @@ def play_progression(prog, key, octaves=None, Ioctave=4, delay=1.0, Iup = "I"):
         chords.append(chord)
 
     for i, chord in enumerate(chords):
-        # print(ch.determine(chord)[0])
         fluidsynth.play_NoteContainer(chord)
         if i != len(chords) - 1:
             time.sleep(delay)
@@ -286,13 +285,15 @@ if __name__ == '__main__':
                 for x in chord:
                     x.octave = x.octave + d
 
-            # Find Ioctave
-            dist_to_tonic = (int(chord[0]) - int(Note(KEY))) % 12
-            I_root = Note().from_int(int(chord[0]) - dist_to_tonic)
-            Ioctave = I_root.octave
-            
+                # Find Ioctave
+                dist_to_tonic = (int(chord[0]) - int(Note(KEY))) % 12
+                I_root = Note().from_int(int(chord[0]) - dist_to_tonic)
+                Ioctave = I_root.octave
+            else:
+                Ioctave = DEFAULT_IOCTAVE
+
             # Play chord
-            fluidsynth.play_NoteContainer(chord)
+            play_progression([numeral], KEY, Ioctave=Ioctave)
 
         newchord = True
         ans = input("Enter 1-7 or root of chord: ")
@@ -306,7 +307,7 @@ if __name__ == '__main__':
                 pass
 
         if ans == "":
-            fluidsynth.play_NoteContainer(chord)
+            play_progression([numeral], KEY, Ioctave=Ioctave)
             newchord = False
             continue  # skip delay
         elif ans == "k":
