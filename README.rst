@@ -70,4 +70,4 @@ Contact me, AndyAPort@gmail.com
 Licence
 -------
 
-This module is under a MIT License.
+This module is under an MIT License.
