@@ -70,7 +70,7 @@ def get_user_args():
     parser.add_argument(
         '-f', '--sound_font',
         action='store_true',
-        default=os.path.join(os.getcwd(), "fluid-soundfont", "FluidR3 GM2-2.SF2"),
+        default=os.path.join(os.path.dirname(__file__), "fluid-soundfont", "FluidR3 GM2-2.SF2"),
         help=("You can use this flag to specify a sound font (.sf2) file. " 
               "By default ")
         )
@@ -210,6 +210,23 @@ def chordname(chord, numeral=None):
     return s
 
 
+def random_progression(number_strums, numerals, strums_per_chord=[2, 4]):
+
+    prog_strums = []
+    prog = []
+    while len(prog_strums) < number_strums:
+        numeral = random.choice(numerals)
+        strums = random.choice(strums_per_chord)
+
+        # not very elegant/musical
+        if len(prog) + strums > number_strums:
+            strums = number_strums - len(prog)
+
+        prog_strums += [numeral] * strums
+        prog += [numeral]
+    return prog, prog_strums
+
+
 if __name__ == '__main__':
     # Initialize
     user_args = get_user_args()
@@ -247,6 +264,9 @@ if __name__ == '__main__':
     # Other user args
     MANY_OCTAVES = user_args.many_octaves
     DELAY = user_args.delay
+    PROGRESSION_MODE = False
+    PROG_LENGTHS = [12, 16]
+    keys = ['A', 'Bb', 'B', 'C', 'C#', 'D', 'Eb', 'E', 'F', 'F#' , 'G' , 'Ab']
 
 
     # Play the Game!!!
@@ -257,10 +277,11 @@ if __name__ == '__main__':
               "'cad' to hear the cadence,\n"
               "'w' to change the delay between chords,\n"
               "'s' to toggle between hearing triads and hearing seventh chords,\n"
-              "'k' to change the key, or \n"
-              "'o' to toggle between using one octave or many.")
+              "'k' to change the key,\n"
+              "'o' to toggle between using one octave or many, or\n"
+              "'prog' to switch to random progression mode (experimental).")
         print("\n" + "-" * 10 + "\n")
-        if user_args.minor:
+        if KEY == KEY.lower():
             print("KEY:", KEY.upper(), "min")
         else:
             print("KEY:", KEY, "Maj")
@@ -273,7 +294,10 @@ if __name__ == '__main__':
     newchord = True
     while 1:
         correct = False
-        if newchord:
+
+        ### Choose new chord+octave/Progression #################
+        # Single chord mode
+        if newchord and not PROGRESSION_MODE:
             # Pick random chord
             numeral = random.choice(numerals)
             chord = NoteContainer(progressions.to_chords([numeral], KEY)[0])
@@ -292,29 +316,79 @@ if __name__ == '__main__':
             else:
                 Ioctave = DEFAULT_IOCTAVE
 
-            # Play chord
-            play_progression([numeral], KEY, Ioctave=Ioctave)
+        # Progession mode
+        elif newchord and PROGRESSION_MODE:
+            KEY = random.choice(keys)
+            if random.choice([0,1]):
+                KEY = KEY.lower()
+            prog_length = random.choice(PROG_LENGTHS)
+            prog, prog_strums = random_progression(prog_length, numerals)
 
-        newchord = True
-        ans = input("Enter 1-7 or root of chord: ")
-        if ans == str(numerals.index(numeral) + 1):
-            correct = True
+            print("\n" + "-" * 10 + "\n")
+            if KEY == KEY.lower():
+                print("KEY:", KEY.upper(), "min")
+            else:
+                print("KEY:", KEY, "Maj")
+            print("-" * 10)
+
+
+        ### Play chord/progression
+        if PROGRESSION_MODE:
+            play_progression(prog_strums, KEY, Ioctave=Ioctave)
         else:
-            try:
-                if int(Note(ans[0].upper() + ans[1:])) % 12 == int(Note(chord[0].name)) % 12:
-                    correct = True
-            except:
-                pass
-
-        if ans == "":
             play_progression([numeral], KEY, Ioctave=Ioctave)
+
+
+        ### Request user's answer #################
+        newchord = True
+        if PROGRESSION_MODE:
+            ans = input("Enter your answer using root note names or numbers 1-7 seperated by spaces: ")
+        else:
+            ans = input("Enter 1-7 or root of chord: ")
+
+
+
+        ### Determine if answer is correct (and respond if in PROGRESSION MODE) ##########
+        def evalanswer(answer, numeral_, root_note):
+            correct_ = False
+            if answer == str(numerals.index(numeral_) + 1):
+                correct_ = True
+            else:
+                try:
+                    if int(Note(answer[0].upper() + answer[1:])) % 12 == int(Note(root_note)) % 12:
+                        correct_ = True
+                except:
+                    pass
+            return correct_
+
+
+        if PROGRESSION_MODE:
+            answers = ans.split(" ")
+            for i, answer in enumerate(answers):
+                try:
+                    numeral = prog[i]
+                    root = NoteContainer(progressions.to_chords([numeral], KEY)[0])[0].name
+                    print(evalanswer(answer, numeral[i], root))
+                except IndexError:
+                    print("too many answers")
+                    pass
+            if len(answers) < len(prog):
+                print("too few answers")
+
+            print("Progression:", " ".join(prog_strums))
+            print("Correct Answer:", " ".join([str(numerals.index(x) + 1) for x in prog]))
+        else:
+            correct = evalanswer(ans, numeral, chord[0].name)
+
+
+        ### Other parsing of user's answer ##################
+        if ans == "":
             newchord = False
             continue  # skip delay
         elif ans == "k":
             newkey = input("Enter the desired key, use upper-case for major "
                                "and lower-case for minor (e.g. C or c).\n"
                                "Enter R/r for a random major/minor key.")
-            keys = ['A', 'Bb', 'B', 'C', 'C#', 'D', 'Eb', 'E', 'F', 'F#' , 'G' , 'Ab']
             if newkey == 'R':
                 KEY = random.choice(keys)
             elif newkey == 'r':
@@ -323,7 +397,7 @@ if __name__ == '__main__':
                 KEY = newkey
             intro(cadence=CADENCE, key=KEY)
 
-        elif correct:
+        elif correct and not PROGRESSION_MODE:
             print("Yes!", chordname(chord, numeral))
             # fluidsynth.play_NoteContainer(chord)
             # time.sleep(DELAY)
@@ -358,13 +432,15 @@ if __name__ == '__main__':
             # time.sleep(DELAY)
             # resolve(chord[0], key=KEY, delay=DELAY)
             resolve_with_chords(numeral, KEY, Ioctave=Ioctave)
+        elif ans == "prog":
+            PROGRESSION_MODE = not PROGRESSION_MODE
         else:
             print("No!", chordname(chord, numeral))
             # fluidsynth.play_NoteContainer(chord)
             # time.sleep(DELAY)
             # resolve(chord[0], key=KEY, delay=DELAY)
             resolve_with_chords(numeral, KEY, Ioctave=Ioctave)
-        time.sleep(2*DELAY)
+        time.sleep(DELAY)
 
 
 
