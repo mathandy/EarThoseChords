@@ -18,10 +18,15 @@ For help, see README file.
 
 # Just in case the prereqs become python 3 compatible some day
 from __future__ import division, absolute_import, print_function
+
 try:
     input = raw_input
 except: 
     pass
+
+# So user doesn't have to press enter (N/A in progression mode)
+from getch import getch  
+
 
 # External Dependencies
 import argparse, time, sys, random, os
@@ -275,24 +280,32 @@ if __name__ == '__main__':
     
     CADENCE = [I, IV, V, I]
     numerals = [I, II, III, IV, V, VI, VII]
+    if not notes.is_valid_note(KEY):
+        print("ATTENTION: User-input key, {}, not valid, using C Major instead.".format(KEY))
+        KEY = "C"
 
     # Other user args
     MANY_OCTAVES = user_args.many_octaves
     DELAY = user_args.delay
     PROGRESSION_MODE = False
+
+    # Other args that should be user-adjustable, but aren't yet
     PROG_LENGTHS = [2, 3]  # Number of strums in a progression
     CHORD_LENGTHS = range(1, max(PROG_LENGTHS) + 1)  # Number of strums per chord
+    RESOLVE_WHEN_INCORRECT = True
+    RESOLVE_WHEN_CORRECT = True
+    
+    # Useful definitions
     keys = ['A', 'Bb', 'B', 'C', 'C#', 'D', 'Eb', 'E', 'F', 'F#' , 'G' , 'Ab']
 
-
     # Options
-    options = [Option("cad", "hear the cadence"),
+    options = [Option("v", "hear the cadence"),
                Option("w", "change the delay between chords"),
                Option("s", "toggle between hearing triads and hearing seventh chords"),
                Option("k", "change the key"),
                Option("o", "toggle between using one octave or many"),
                Option("m", "to arpeggiate chord (not available in progression mode)"),
-               Option("prog", "switch to random progression mode (experimental)"),
+               Option("p", "switch to random progression mode (experimental)"),
                Option("", "hear the chord or progession again", 
                 input_description="Press Enter")]
 
@@ -378,7 +391,7 @@ if __name__ == '__main__':
             ans = input("Enter your answer using root note names "
                         "or numbers 1-7 seperated by spaces: ").strip()
         else:
-            ans = input("Enter 1-7 or root of chord: ").strip()
+            ans = getch("Enter 1-7 or root of chord: ").strip()
 
 
 
@@ -429,12 +442,19 @@ if __name__ == '__main__':
             continue
         else:
             if isvalidnote(ans):
-                correct = evalanswer(ans, numeral, chord[0].name)
+                if evalanswer(ans, numeral, chord[0].name):
+                    print("Yes!", chordname(chord, numeral))
+                    if RESOLVE_WHEN_CORRECT:
+                        resolve_with_chords(numeral, key=KEY, Ioctave=Ioctave)
+                else:
+                    print("No!", chordname(chord, numeral))
+                    if RESOLVE_WHEN_INCORRECT:
+                        resolve_with_chords(numeral, key=KEY, Ioctave=Ioctave)
+
             else:
                 print("User input not understood.  Please try again.")
                 newquestion = False
                 continue
-
 
 
         ### Other parsing of user's answer ##################
@@ -449,13 +469,15 @@ if __name__ == '__main__':
                 KEY = random.choice(keys)
             elif newkey == 'r':
                 KEY = random.choice(keys).lower()
-            else:
+            elif notes.is_valid_note(newkey):
                 KEY = newkey
+            else:
+                print("Input key not understood, key unchanged.")
             intro(cadence=CADENCE, key=KEY)
             continue
 
         elif ans == "w":
-            DELAY = int(input("Enter the desired delay time (in seconds): "))
+            DELAY = float(input("Enter the desired delay time (in seconds): "))
             continue
 
         elif ans == "s":
@@ -476,34 +498,24 @@ if __name__ == '__main__':
             # resolve(chord[0], key=KEY, delay=DELAY)
             resolve_with_chords(numeral, KEY, Ioctave=Ioctave)
 
-        elif ans == "prog":
+        elif ans == "p":
             PROGRESSION_MODE = not PROGRESSION_MODE
             # intro(cadence=CADENCE, key=KEY)
+        elif ans == "v" or ans == "cad" or ans == "cadence":
+            intro(cadence=CADENCE, key=KEY)
+            fluidsynth.play_NoteContainer(chord)
+            newquestion = False
+            continue
 
+        # other (single chord mode only) parsing
         elif not PROGRESSION_MODE:
-            if ans == "cad" or ans == "cadence":
-                intro(cadence=CADENCE, key=KEY)
-                fluidsynth.play_NoteContainer(chord)
-                newquestion = False
-                continue
             if ans == "m" and not PROGRESSION_MODE:
                 for x in chord:
                     fluidsynth.play_Note(x)
                     time.sleep(DELAY/2)
                 newquestion = False
                 continue
-            if correct:
-                print("Yes!", chordname(chord, numeral))
-                # fluidsynth.play_NoteContainer(chord)
-                # time.sleep(DELAY)
-                # resolve(chord[0], key=KEY, delay=DELAY)
-                resolve_with_chords(numeral, key=KEY, Ioctave=Ioctave)
-            else:
-                print("No!", chordname(chord, numeral))
-                # fluidsynth.play_NoteContainer(chord)
-                # time.sleep(DELAY)
-                # resolve(chord[0], key=KEY, delay=DELAY)
-                resolve_with_chords(numeral, KEY, Ioctave=Ioctave)
+ 
         else:
             print("Command not understood.")
             newquestion = False
