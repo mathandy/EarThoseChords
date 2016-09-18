@@ -36,11 +36,11 @@ Prerequisites
 Setup
 -----
 
-**1. Get Python 2.**
+**1. Get Python 2**
 
 Note: If you have a **Mac** or are running **Linux**, you already have Python 2.x.  If you're on **Windows**, go download Python 2 and install it.
 
-**2. Install mingus and sequencer python modules:**
+**2. Install mingus and sequencer python modules**
 
 This is easy using pip (which typically comes with Python).  Just open up a terminal/command-prompt and enter the following two commands (without the $).
 
@@ -48,20 +48,21 @@ $ pip install mingus
 
 $ pip install sequencer
 
-**3. Download and install fluidsynth** (from http://www.fluidsynth.org/).
+**3. Install fluidsynth**
 
 This is easy through a linux/mac package manager.
 
-On Linux:
+[On Linux:]
 
 $ sudo apt-get install fluidsynth
 
-On OS X (assuming you have Homebrew installed):
+[On OS X: (assuming you have Homebrew installed)] 
 
 $ brew install fluidsynth
 
-On Windows:
-I'm not sure the easiest, way -- I'd recommend googling "fluidsynth binary" unless you are comfortable compiling the source yourself.  If someone finds an easy way, please let me know and I'll update this.
+[On Windows:]
+
+You can either compile FluidSynth yourself or use the binary installer (.exe) that is available for its GUI, Qsynth.
 
 For Help
 --------
