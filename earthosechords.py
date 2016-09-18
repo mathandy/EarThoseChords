@@ -250,20 +250,7 @@ class Option:
 if __name__ == '__main__':
     # Initialize
     user_args = get_user_args()
-    if user_args.sound_font:
-        fluidsynth.init(user_args.sound_font)
-    else:
-        try:
-            fluidsynth.init(sf2_em6)
-        except:
-            try:
-                fluidsynth.init(sf2_ex)
-            except:
-                try:
-                    fluidsynth.init(sf2_ex)
-                except:
-                    raise("Please specify a sound font (.sf2) file using the "
-                          "--sound_font flag.")
+    fluidsynth.init(user_args.sound_font)
 
     # Change instrument
     # fluidsynth.set_instrument(1, 14)  
@@ -311,6 +298,17 @@ if __name__ == '__main__':
 
     def isvalidoption(answer):
         return answer in [opt.command for opt in options]
+
+    def isvalidnote(answer):
+        try:  # return True if response is numerical 1-7 
+            return int(answer) in range(1, 8)
+        except: 
+            pass
+        try:  # return True if response is a valid note name
+            return notes.is_valid_note(answer[0].upper() + answer[1:])
+        except: 
+            pass
+        return False
 
     # Play the Game!!!
     def intro(cadence=CADENCE, key=KEY):
@@ -378,6 +376,7 @@ if __name__ == '__main__':
             prog_length = random.choice(PROG_LENGTHS)
             prog, prog_strums = random_progression(prog_length, numerals, CHORD_LENGTHS)
 
+
         ### Play chord/progression
         if PROGRESSION_MODE:
             play_progression(prog_strums, KEY, Ioctave=Ioctave)
@@ -392,7 +391,6 @@ if __name__ == '__main__':
                         "or numbers 1-7 seperated by spaces: ").strip()
         else:
             ans = getch("Enter 1-7 or root of chord: ").strip()
-
 
 
         ### Determine if answer is correct (and respond if in PROGRESSION MODE)
@@ -410,14 +408,6 @@ if __name__ == '__main__':
                     pass
             return correct_
 
-        def isvalidnote(answer):
-            try: return int(answer) in range(1, 8)
-            except: pass
-
-            try: return notes.is_valid_note(answer[0].upper() + answer[1:])
-            except: pass
-
-            return False
 
         if isvalidoption(ans):
             pass
@@ -461,10 +451,12 @@ if __name__ == '__main__':
         if ans == "":
             newquestion = False
             continue  # skip delay
+
         elif ans == "k":
-            newkey = input("Enter the desired key, use upper-case for major "
-                               "and lower-case for minor (e.g. C or c).\n"
-                               "Enter R/r for a random major/minor key.")
+            mes = ("Enter the desired key, use upper-case for major "
+                   "and lower-case for minor (e.g. C or c).\n"
+                    "Enter R/r for a random major/minor key.")
+            newkey = input(mes)
             if newkey == 'R':
                 KEY = random.choice(keys)
             elif newkey == 'r':
@@ -491,16 +483,13 @@ if __name__ == '__main__':
             MANY_OCTAVES = not MANY_OCTAVES
             continue
 
-        elif ans == "q":
-            print("OK, you'll get it next time!", chordname(chord, numeral))
-            # fluidsynth.play_NoteContainer(chord)
-            # time.sleep(DELAY)
-            # resolve(chord[0], key=KEY, delay=DELAY)
-            resolve_with_chords(numeral, KEY, Ioctave=Ioctave)
-
         elif ans == "p":
             PROGRESSION_MODE = not PROGRESSION_MODE
+            print("\nProgression mode {}...".format("on" if PROGRESSION_MODE else "off"))
+            time.sleep(DELAY)
             # intro(cadence=CADENCE, key=KEY)
+            continue
+
         elif ans == "v" or ans == "cad" or ans == "cadence":
             intro(cadence=CADENCE, key=KEY)
             fluidsynth.play_NoteContainer(chord)
@@ -509,16 +498,16 @@ if __name__ == '__main__':
 
         # other (single chord mode only) parsing
         elif not PROGRESSION_MODE:
-            if ans == "m" and not PROGRESSION_MODE:
+            if ans == "m":
                 for x in chord:
                     fluidsynth.play_Note(x)
                     time.sleep(DELAY/2)
                 newquestion = False
                 continue
- 
         else:
             print("Command not understood.")
             newquestion = False
+            continue
 
         time.sleep(DELAY)
 
