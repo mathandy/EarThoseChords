@@ -56,7 +56,7 @@ This is easy through a linux/mac package manager.
 
 $ sudo apt-get install fluidsynth
 
-[On OS X: (assuming you have Homebrew installed)] 
+[On OS X:] (assuming you have Homebrew installed)
 
 $ brew install fluidsynth
 
