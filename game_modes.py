@@ -10,6 +10,7 @@ import settings as st
 
 # External Dependencies
 import time, random, sys
+from multiprocessing import Process
 from mingus.midi import fluidsynth  # requires FluidSynth is installed
 from mingus.core import progressions, intervals, chords as ch
 import mingus.core.notes as notes
@@ -104,7 +105,8 @@ menu_commands = [
     gs.MenuCommand("o", "toggle between using one octave or many", toggle_many_octaves),
     gs.MenuCommand("m", "to arpeggiate chord (not available in progression mode)", arpeggiate),
     gs.MenuCommand("p", "switch to random progression mode (experimental)", change_game_mode('progression')),
-    gs.MenuCommand("h", "switch to chord tone mode", change_game_mode('chord_tone')),
+    gs.MenuCommand("t", "switch to chord tone mode", change_game_mode('chord_tone')),
+    gs.MenuCommand("h", "switch to single chord mode", change_game_mode('chord_tone')),
     gs.MenuCommand("x", "quit", sys.exit),
     gs.MenuCommand("", "hear the chord or progression again", play_question_again,
                  input_description="Press Enter"),
@@ -328,15 +330,19 @@ def new_question_chord_tone():
         tone = st.CURRENT_Q_INFO['tone']
 
     # Play chord, then tone
-    play_progression([numeral], st.KEY, Ioctave=Ioctave)
-    time.sleep(st.DELAY)
-    fluidsynth.play_Note(tone)
+    def playfcn():
+        play_progression([numeral], st.KEY, Ioctave=Ioctave)
+        time.sleep(st.DELAY)
+        fluidsynth.play_Note(tone)
+    p = Process(target=playfcn())
+    p.start()
 
     # Request user's answer
-    ans = getch("Which tone did you hear?\n""Enter {}, or {}: ".format(
+    mes = ("Which tone did you hear?\n""Enter {}, or {}: ".format(
             ", ".join([str(t) for t in st.TONES[:-1]]),
-            st.TONES[-1])
-        ).strip()
+            st.TONES[-1]))
+    ans = getch(mes).strip()
+    p.terminate()
 
     if ans in menu_commands:
         menu_commands[ans].action()
@@ -354,13 +360,36 @@ def new_question_chord_tone():
                 st.SCORE += 1
                 print("Yes! The {} tone of".format(correct_ans), chordname(chord, numeral))
                 if st.ARPEGGIATE_WHEN_CORRECT:
+                    play_progression([numeral], st.KEY, Ioctave=Ioctave)
+                    time.sleep(st.DELAY)
+                    fluidsynth.play_Note(tone)
+                    time.sleep(st.DELAY)
                     arpeggiate()  # sets NEWQUESTION = False
+                    time.sleep(st.DELAY)
                     st.NEWQUESTION = True
             else:
                 print("No! The {} tone of".format(correct_ans), chordname(chord, numeral))
                 if st.ARPEGGIATE_WHEN_INCORRECT:
+                    play_progression([numeral], st.KEY, Ioctave=Ioctave)
+                    time.sleep(st.DELAY)
+                    fluidsynth.play_Note(tone)
+                    time.sleep(st.DELAY)
                     arpeggiate()  # sets NEWQUESTION = False
+                    time.sleep(st.DELAY)
                     st.NEWQUESTION = True
+
+        # secret option
+        elif ans in [8, 9, 0]:
+            tone_idx = [8, 9, 0].index(ans)
+            for num in st.NUMERALS:
+                num_chord = NoteContainer(progressions.to_chords([num], st.KEY)[0])
+                play_progression([num], st.KEY, Ioctave=Ioctave)
+                time.sleep(st.DELAY)
+                fluidsynth.play_Note(num_chord[tone_idx])
+                time.sleep(st.DELAY)
+            time.sleep(st.DELAY)
+            st.NEWQUESTION = False
+
         else:
             print("User input not understood.  Please try again.")
             st.NEWQUESTION = False

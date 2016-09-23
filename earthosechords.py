@@ -66,4 +66,3 @@ if __name__ == '__main__':
 
     while 1:
         st.CURRENT_MODE.new_question()
-        time.sleep(st.DELAY)
