@@ -85,8 +85,8 @@ DELAY = user_args.delay
 PROGRESSION_MODE = False
 
 # Other args that should be user-adjustable, but aren't yet
-PROG_LENGTHS = [2, 3]  # Number of strums in a progression
-CHORD_LENGTHS = range(1, max(PROG_LENGTHS) + 1)  # Number of strums per chord
+PROG_LENGTHS = range(2, 5)  # Number of strums in a progression
+CHORD_LENGTHS = range(1, 3)  # Number of strums per chord
 RESOLVE_WHEN_INCORRECT = True
 RESOLVE_WHEN_CORRECT = True
 ARPEGGIATE_WHEN_CORRECT = True
