@@ -5,7 +5,9 @@ except: pass
 
 from getch import getch
 import game_structure as gs
-from musictools import play_progression, random_progression, random_key, isvalidnote, resolve_with_chords, chordname
+from musictools import (play_progression, random_progression, 
+    random_key, isvalidnote, resolve_with_chords, chordname, 
+    random_chord)
 import settings as st
 
 # External Dependencies
@@ -78,9 +80,16 @@ def toggle_many_octaves():
 
 
 @repeat_question
-def arpeggiate():
-    chord = st.CURRENT_Q_INFO["chord"]
-    for x in chord:
+def arpeggiate(invert=False, descending=False, ):
+
+    arpeggiation = [x for x in st.CURRENT_Q_INFO["chord"]]
+    if invert:
+        arpeggiation = [arpeggiation[i] for i in invert]
+    elif descending:
+        arpeggiation.reverse()
+
+
+    for x in arpeggiation:
         fluidsynth.play_Note(x)
         time.sleep(st.DELAY/2)
 
@@ -97,6 +106,14 @@ def change_game_mode(new_mode):
 def play_question_again():
     return
 
+@repeat_question
+def toggle_alt_chord_tone_res():
+    st.ALTERNATIVE_CHORD_TONE_RESOLUTION = (st.ALTERNATIVE_CHORD_TONE_RESOLUTION + 1) % 3
+    print("Switching to chord tone resolution "
+          "option {}".format(st.ALTERNATIVE_CHORD_TONE_RESOLUTION))
+
+    
+
 menu_commands = [
     gs.MenuCommand("v", "hear the cadence", play_cadence),
     gs.MenuCommand("w", "change the delay between chords", set_delay),
@@ -106,7 +123,8 @@ menu_commands = [
     gs.MenuCommand("m", "to arpeggiate chord (not available in progression mode)", arpeggiate),
     gs.MenuCommand("p", "switch to random progression mode (experimental)", change_game_mode('progression')),
     gs.MenuCommand("t", "switch to chord tone mode", change_game_mode('chord_tone')),
-    gs.MenuCommand("h", "switch to single chord mode", change_game_mode('chord_tone')),
+    gs.MenuCommand("h", "switch to single chord mode", change_game_mode('single_chord')),
+    gs.MenuCommand("i", "toggle between chord tone resolutions", toggle_alt_chord_tone_res),
     gs.MenuCommand("x", "quit", sys.exit),
     gs.MenuCommand("", "hear the chord or progression again", play_question_again,
                  input_description="Press Enter"),
@@ -175,23 +193,9 @@ def new_question_single_chord():
         if st.COUNT:
             print("score: {} / {} = {:.2%}".format(st.SCORE, st.COUNT, st.SCORE/st.COUNT))
         st.COUNT += 1
-        # Pick random chord
-        numeral = random.choice(st.NUMERALS)
-        chord = NoteContainer(progressions.to_chords([numeral], st.KEY)[0])
 
-        # Pick random octave, set chord to octave
-        if st.MANY_OCTAVES:
-            octave = random.choice(st.OCTAVES)
-            d = octave - chord[0].octave
-            for x in chord:
-                x.octave = x.octave + d
-
-            # Find Ioctave
-            dist_to_tonic = (int(chord[0]) - int(Note(st.KEY))) % 12
-            I_root = Note().from_int(int(chord[0]) - dist_to_tonic)
-            Ioctave = I_root.octave
-        else:
-            Ioctave = st.DEFAULT_IOCTAVE
+        # Pick random chord/octave
+        numeral, chord, Ioctave = random_chord()
 
         # store question info
         st.CURRENT_Q_INFO = {'numeral': numeral,
@@ -292,28 +296,50 @@ def new_question_progression():
 #     return ans == correct_ans
 
 
+def resolve_chord_tone(chord, tone, Ioctave):
+    # play_progression([numeral], st.KEY, Ioctave=Ioctave)
+
+    if st.ALTERNATIVE_CHORD_TONE_RESOLUTION == 1:
+        fluidsynth.play_NoteContainer(chord)
+        time.sleep(st.DELAY)
+        fluidsynth.play_Note(tone)
+        time.sleep(st.DELAY)
+        root = chord[0]
+        interval = NoteContainer([root, tone])
+        fluidsynth.play_NoteContainer(interval)
+    elif st.ALTERNATIVE_CHORD_TONE_RESOLUTION == 2:
+        fluidsynth.play_NoteContainer(chord)
+        time.sleep(st.DELAY)
+        tone_idx = [x for x in chord].index(tone)
+        if tone_idx == 0:
+            arpeggiate()
+        elif tone_idx == 1:
+            arpeggiate(invert=[1, 0, 2])
+        elif tone_idx == 2:
+            arpeggiate(descending=True)
+        else:
+            raise Exception("This chord tone resolutions mode is only implemented for triads.")
+
+        # fluidsynth.play_Note(Iup_note)
+        # Iup_note = Note(st.KEY)
+        # Iup_note.octave += 1
+        # fluidsynth.play_Note(Iup_note)
+    else:
+        fluidsynth.play_NoteContainer(chord)
+        time.sleep(st.DELAY)
+        fluidsynth.play_Note(tone)
+        time.sleep(st.DELAY)
+        arpeggiate()  # sets NEWQUESTION = False
+    
+
 def new_question_chord_tone():
     if st.NEWQUESTION:
         if st.COUNT:
             print("score: {} / {} = {:.2%}".format(st.SCORE, st.COUNT, st.SCORE/st.COUNT))
         st.COUNT += 1
-        # Pick random chord
-        numeral = random.choice(st.NUMERALS)
-        chord = NoteContainer(progressions.to_chords([numeral], st.KEY)[0])
 
-        # Pick random octave, set chord to octave
-        if st.MANY_OCTAVES:
-            octave = random.choice(st.OCTAVES)
-            d = octave - chord[0].octave
-            for x in chord:
-                x.octave = x.octave + d
-
-            # Find Ioctave
-            dist_to_tonic = (int(chord[0]) - int(Note(st.KEY))) % 12
-            I_root = Note().from_int(int(chord[0]) - dist_to_tonic)
-            Ioctave = I_root.octave
-        else:
-            Ioctave = st.DEFAULT_IOCTAVE
+        # Pick random chord/octave
+        numeral, chord, Ioctave = random_chord()
 
         # Pick a random tone in the chord
         tone = random.choice(chord)
@@ -360,21 +386,13 @@ def new_question_chord_tone():
                 st.SCORE += 1
                 print("Yes! The {} tone of".format(correct_ans), chordname(chord, numeral))
                 if st.ARPEGGIATE_WHEN_CORRECT:
-                    play_progression([numeral], st.KEY, Ioctave=Ioctave)
-                    time.sleep(st.DELAY)
-                    fluidsynth.play_Note(tone)
-                    time.sleep(st.DELAY)
-                    arpeggiate()  # sets NEWQUESTION = False
+                    resolve_chord_tone(chord, tone, Ioctave)
                     time.sleep(st.DELAY)
                     st.NEWQUESTION = True
             else:
                 print("No! The {} tone of".format(correct_ans), chordname(chord, numeral))
                 if st.ARPEGGIATE_WHEN_INCORRECT:
-                    play_progression([numeral], st.KEY, Ioctave=Ioctave)
-                    time.sleep(st.DELAY)
-                    fluidsynth.play_Note(tone)
-                    time.sleep(st.DELAY)
-                    arpeggiate()  # sets NEWQUESTION = False
+                    resolve_chord_tone(chord, tone, Ioctave)
                     time.sleep(st.DELAY)
                     st.NEWQUESTION = True
 

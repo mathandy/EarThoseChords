@@ -14,6 +14,27 @@ import mingus.core.notes as notes
 from mingus.containers import NoteContainer, Note
 
 
+def random_chord():
+    # Pick random chord
+    numeral = random.choice(st.NUMERALS)
+    chord = NoteContainer(progressions.to_chords([numeral], st.KEY)[0])
+
+    # Pick random octave, set chord to octave   
+    if st.MANY_OCTAVES:
+        octave = random.choice(st.OCTAVES)
+        d = octave - chord[0].octave
+        for x in chord:
+            x.octave = x.octave + d
+
+        # Find Ioctave
+        dist_to_tonic = (int(chord[0]) - int(Note(st.KEY))) % 12
+        I_root = Note().from_int(int(chord[0]) - dist_to_tonic)
+        Ioctave = I_root.octave
+    else:
+        Ioctave = st.DEFAULT_IOCTAVE
+    return numeral, chord, Ioctave
+
+    
 def isvalidnote(answer):
     try:  # return True if response is numerical 1-7
         return int(answer) in range(1, 8)
