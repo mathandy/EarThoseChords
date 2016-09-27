@@ -57,7 +57,7 @@ def toggle_triads7ths():
 
 
 @new_question
-def set_key():
+def set_key(reset_score=True):
     mes = ("Enter the desired key, use upper-case for major "
            "and lower-case for minor (e.g. C or c).\n"
             "Enter R/r for a random major/minor key.")
@@ -72,6 +72,9 @@ def set_key():
     else:
         print("Input key not understood, key unchanged.")
     st.CURRENT_MODE.intro()
+    if reset_score:
+        st.COUNT = 0
+        st.SCORE = 0
 
 
 @repeat_question
@@ -220,11 +223,15 @@ def new_question_single_chord():
                 st.SCORE += 1
                 print("Yes!", chordname(chord, numeral))
                 if st.RESOLVE_WHEN_CORRECT:
-                    resolve_with_chords(numeral, key=st.KEY, Ioctave=Ioctave, numerals=st.NUMERALS)
+                    resolve_with_chords(numeral, key=st.KEY, Ioctave=Ioctave, 
+                        numerals=st.NUMERALS, delay=st.DELAY / 2)
+                    time.sleep(st.DELAY)
             else:
                 print("No!", chordname(chord, numeral))
                 if st.RESOLVE_WHEN_INCORRECT:
-                    resolve_with_chords(numeral, key=st.KEY, Ioctave=Ioctave, numerals=st.NUMERALS)
+                    resolve_with_chords(numeral, key=st.KEY, Ioctave=Ioctave, 
+                        numerals=st.NUMERALS, delay=st.DELAY / 2)
+                    time.sleep(st.DELAY)
         else:
             print("User input not understood.  Please try again.")
     return
@@ -238,10 +245,14 @@ def eval_progression(ans, prog, prog_strums):
     except:
         answers = ans.split(" ")
 
+    answers_correct = []
     for i, answer in enumerate(answers):
         try:
-            root = NoteContainer(progressions.to_chords([prog[i]], st.KEY)[0])[0].name
-            print(eval_single_chord(answer, prog[i][i], root))
+            correct_numeral = prog[i]
+            root = NoteContainer(progressions.to_chords([correct_numeral], st.KEY)[0])[0].name
+            user_correct = eval_single_chord(answer, correct_numeral, root)
+            print(user_correct)
+            answers_correct.append(user_correct)
         except IndexError:
             print("too many answers")
     if len(answers) < len(prog):
@@ -249,6 +260,14 @@ def eval_progression(ans, prog, prog_strums):
 
     print("Progression:", " ".join(prog_strums))
     print("Correct Answer:", " ".join([str(st.NUMERALS.index(x) + 1) for x in prog]))
+
+    if all(answers_correct):
+        st.SCORE += 1
+        print("Good Job!")
+        print()
+    else:
+        print("It's ok, you'll get 'em next time.")
+        print()
     time.sleep(st.DELAY)
 
 
@@ -269,7 +288,7 @@ def new_question_progression():
         prog_strums = st.CURRENT_Q_INFO['prog_strums']
 
     # Play chord/progression
-    play_progression(prog_strums, st.KEY)
+    play_progression(prog_strums, st.KEY, delay=st.DELAY)
 
     # Request user's answer
     ans = input("Enter your answer using root note names "
@@ -280,13 +299,13 @@ def new_question_progression():
     else:
         eval_progression(ans, prog, prog_strums)
 
-    # Request user's answer
-    ans = input("Enter your answer using root note names "
-                "or numbers 1-7 seperated by spaces: ").strip()
-    if ans in menu_commands:
-        menu_commands[ans].action()
-    else:
-        eval_progression(ans, prog, prog_strums)
+    # # Request user's answer
+    # ans = input("Enter your answer using root note names "
+    #             "or numbers 1-7 seperated by spaces: ").strip()
+    # if ans in menu_commands:
+    #     menu_commands[ans].action()
+    # else:
+    #     eval_progression(ans, prog, prog_strums)
 
 
 # @new_question

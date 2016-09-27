@@ -66,7 +66,7 @@ def random_key(output_on=True):
 
     return key
 
-def play_progression(prog, key, octaves=None, Ioctave=4, delay=1.0, Iup = "I"):
+def play_progression(prog, key, octaves=None, Ioctave=4, Iup = "I", delay=1.0):
     """ Converts a progression to chords and plays them using fluidsynth.
     Iup will be played an octave higher than other numerals by default.
     Set Ioctave to fall for no octave correction from mingus default behavior."""
@@ -111,7 +111,7 @@ def play_progression(prog, key, octaves=None, Ioctave=4, delay=1.0, Iup = "I"):
             time.sleep(delay)
 
 
-def resolve_with_chords(num2res, key, Ioctave, numerals):
+def resolve_with_chords(num2res, key, Ioctave, numerals, delay=0.5):
     """"Note: only relevant for major scale triads."""
     [I, II, III, IV, V, VI, VII] = numerals
 
@@ -126,7 +126,7 @@ def resolve_with_chords(num2res, key, Ioctave, numerals):
     }
 
     res = resdict[num2res]
-    play_progression(res, key, Ioctave=Ioctave, delay=st.DELAY, Iup=I)
+    play_progression(res, key, Ioctave=Ioctave, delay=delay, Iup=I)
     return res
 
 
@@ -145,10 +145,11 @@ def random_progression(number_strums, numerals, strums_per_chord=[1]):
     prog = []
     numeral = ""
     while len(prog_strums) < number_strums:
+        prev_numeral = numeral
+        numeral = random.choice(numerals)
+        if prev_numeral == numeral:  # check not same as previous chord
+            continue
 
-        tmp = random.choice(numerals)
-        if tmp != numeral:  # check not same as previous chord
-            numeral = tmp
         strums = random.choice(strums_per_chord)
 
         # not very elegant/musical (i.e. a "jazzy" solution)
