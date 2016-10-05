@@ -12,6 +12,7 @@ import settings as st
 
 # External Dependencies
 import time, random, sys
+from collections import OrderedDict
 from multiprocessing import Process
 from mingus.midi import fluidsynth  # requires FluidSynth is installed
 from mingus.core import progressions, intervals, chords as ch
@@ -38,6 +39,7 @@ def new_question(func):
 @repeat_question
 def play_cadence():
     play_progression(st.CADENCE, st.KEY, delay=st.DELAY, Iup=st.I)
+    time.sleep(2 * st.DELAY)
 
 
 @repeat_question
@@ -132,7 +134,7 @@ menu_commands = [
     gs.MenuCommand("", "hear the chord or progression again", play_question_again,
                  input_description="Press Enter"),
 ]
-menu_commands = dict([(mc.command, mc) for mc in menu_commands])
+menu_commands = OrderedDict([(mc.command, mc) for mc in menu_commands])
 
 
 # Game Mode Intro Functions
@@ -259,6 +261,7 @@ def eval_progression(ans, prog, prog_strums):
         print("too few answers")
 
     print("Progression:", " ".join(prog_strums))
+    print("Your answer:   ", " ".join(answers))
     print("Correct Answer:", " ".join([str(st.NUMERALS.index(x) + 1) for x in prog]))
 
     if all(answers_correct):

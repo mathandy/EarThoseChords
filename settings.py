@@ -94,7 +94,7 @@ ARPEGGIATE_WHEN_INCORRECT = True
 
 OCTAVES = range(1, 8)  # if many_octaves flag invoked
 DEFAULT_IOCTAVE = 4
-INITIAL_MODE = 'chord_tone'
+INITIAL_MODE = 'single_chord'
 
 # Inelegant storage
 NEWQUESTION = True
