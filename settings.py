@@ -93,6 +93,7 @@ ARPEGGIATE_WHEN_CORRECT = True
 ARPEGGIATE_WHEN_INCORRECT = True
 INTERVALS=[1, 3, 5]
 INTERVAL_MODE = "mixed"
+BPM = 60
 
 OCTAVES = range(1, 8)  # if many_octaves flag invoked
 DEFAULT_IOCTAVE = 4

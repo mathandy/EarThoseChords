@@ -85,7 +85,10 @@ def toggle_many_octaves():
 
 
 @repeat_question
-def arpeggiate(invert=False, descending=False, chord=None):
+def arpeggiate(invert=False, descending=False, chord=None, delay=None):
+    if not delay:
+        delay = st.DELAY/2
+
     if chord:
         pass
     elif st.CURRENT_MODE.name in ['single_chord', 'chord_tone']:
@@ -104,7 +107,7 @@ def arpeggiate(invert=False, descending=False, chord=None):
 
     for x in arpeggiation:
         fluidsynth.play_Note(x)
-        time.sleep(st.DELAY/2)
+        time.sleep(delay)
 
 def change_mode_settings(mode):
 
@@ -199,11 +202,13 @@ def eval_interval(ans, interval, diatonic):
     except:
         answers = ans.split(" ")
 
+
     def parse_answer(ans):
         try:
             return int(ans) % 8
         except:
             try:
+                note_name = ans[0].upper() + ans[1:]  # capitalize for mingus
                 return diatonic.note2num(Note(ans))
             except:
                 return "Err" 
