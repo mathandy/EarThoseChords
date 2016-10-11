@@ -34,6 +34,62 @@ def random_chord():
         Ioctave = st.DEFAULT_IOCTAVE
     return numeral, chord, Ioctave
 
+
+class Diatonic(object):
+    def __init__(self, key, Ioctave):
+        self.key = key
+        self.Ioctave = Ioctave
+
+        if key[0] == key[0].lower():  # natural minor
+            self.rel_semitones = [0, 2, 3, 5, 7, 8, 10]
+            self.keyname = key[0].upper + key[1:] + " Major"
+        elif key[0] == key[0].upper():  # major
+            self.rel_semitones = [0, 2, 4, 5, 7, 9, 11]
+            self.keyname = key + " Minor"
+        self.tonic = Note(name=key.upper(), octave=Ioctave)
+
+        self.abs_semitones = [int(self.tonic) + x for x in self.rel_semitones]
+        self.notes = [Note().from_int(x) for x in self.abs_semitones]
+        self.numdict = dict([(k + 1, n) for k, n in enumerate(self.notes)])
+
+    def relsemi2note(self, rel_semi):
+        return Note().from_int(int(self.tonic) + rel_semi)
+
+    def num2note(self, number, ascending=True):
+        assert number > 0
+        self.rel_semitones[(number - 1) % 8]
+        rel_semi = \
+            self.rel_semitones[(number - 1) % 8] + 12*((number - 1)//8)
+        return relsemi2note(rel_semi)
+
+    def relsemi2note(self, rel_semi):
+        return Note().from_int(int(self.tonic) + rel_semi)
+
+    def note2num(self, note):
+        base_semitones = [x % 12 for x in self.abs_semitones]
+        note_base_semi = int(note) % 12
+        try:
+            return base_semitones.index(note_base_semi) + 1
+        except:
+            raise ValueError("{} is not a note in {}.".format(note.name, self.keyname)) 
+
+    def interval(self, number, root=None, ascending=True):
+        assert number > 0
+        if not root:
+            root = self.notes[0]
+
+        root_idx = self.notes.index(root) + 1
+        if ascending:
+            second_note_idx = (root_idx + (number - 1)) % len(self.notes)
+        else:
+            second_note_idx = (root_idx - (number - 1)) % len(self.notes)
+        second_note = self.notes[second_note_idx]
+
+        return NoteContainer(sorted([root, second_note]))
+
+    def random_note(self):
+        return random.choice(self.notes)
+
     
 def isvalidnote(answer):
     try:  # return True if response is numerical 1-7
