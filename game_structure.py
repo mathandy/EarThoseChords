@@ -28,7 +28,8 @@ class SettingsContainer(object):
 
 
 class GameMode:
-    def __init__(self, intro_fcn, new_question_fcn, menu_fcn=None, mode_specific_settings=None):
+    def __init__(self, name, intro_fcn, new_question_fcn, menu_fcn=None, mode_specific_settings=None):
+        self.name = name
         self.intro_fcn = intro_fcn
         self.new_question_fcn = new_question_fcn
         self.menu_fcn = menu_fcn

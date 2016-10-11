@@ -85,18 +85,39 @@ def toggle_many_octaves():
 
 
 @repeat_question
-def arpeggiate(invert=False, descending=False, ):
+def arpeggiate(invert=False, descending=False, chord=None):
+    if chord:
+        pass
+    elif st.CURRENT_MODE.name in ['single_chord', 'chord_tone']:
+        chord = st.CURRENT_Q_INFO["chord"]
+    elif st.CURRENT_MODE.name in ['interval']:
+        chord = st.CURRENT_Q_INFO["interval"]
+    else:
+        print("Arpeggiation not available in {} mode.".format(st.CURRENT_MODE))
+        return
 
-    arpeggiation = [x for x in st.CURRENT_Q_INFO["chord"]]
+    arpeggiation = [x for x in chord]
     if invert:
         arpeggiation = [arpeggiation[i] for i in invert]
     elif descending:
         arpeggiation.reverse()
 
-
     for x in arpeggiation:
         fluidsynth.play_Note(x)
         time.sleep(st.DELAY/2)
+
+def change_mode_settings(mode):
+
+    if mode == "interval":
+        interval_modes = \
+            ["triads", "sevenths", "ascending", "descending", "mixed"]
+        mes = "Enter:\n"
+        mes += "\n".join(["{} for {}".format(k, m) 
+                for k, m in enumerate(interval_modes)])
+        user_response = getch(mes)
+        st.INTERVAL_MODE = interval_modes[user_response]
+    else:
+        pass
 
 
 def change_game_mode(new_mode):
@@ -104,6 +125,8 @@ def change_game_mode(new_mode):
     def _change_mode():
         st.COUNT = 0
         st.SCORE = 0
+        if new_mode == st.CURRENT_MODE.name:
+            change_mode_settings(new_mode)
         st.CURRENT_MODE = game_modes[new_mode]
     return _change_mode
 
@@ -127,6 +150,7 @@ menu_commands = [
     gs.MenuCommand("o", "toggle between using one octave or many", toggle_many_octaves),
     gs.MenuCommand("m", "to arpeggiate chord (not available in progression mode)", arpeggiate),
     gs.MenuCommand("p", "switch to random progression mode (experimental)", change_game_mode('progression')),
+    gs.MenuCommand("n", "switch to interval mode", change_game_mode('interval')),
     gs.MenuCommand("t", "switch to chord tone mode", change_game_mode('chord_tone')),
     gs.MenuCommand("h", "switch to single chord mode", change_game_mode('single_chord')),
     gs.MenuCommand("i", "toggle between chord tone resolutions", toggle_alt_chord_tone_res),
@@ -162,19 +186,123 @@ def intro(play_cadence=True):
     return
 
 
-def intro_single_chord():
-    intro()
+###############################################################################   
+### Interval ##################################################################
+###############################################################################
 
 
-def intro_progression():
-    intro()
+@new_question
+def eval_interval(ans, interval, diatonic):
+    try:
+        int(ans)
+        answers = [x for x in ans]
+    except:
+        answers = ans.split(" ")
+
+    def parse_answer(ans):
+        try:
+            return int(ans) % 8
+        except:
+            try:
+                return diatonic.note2num(Note(ans))
+            except:
+                return "Err" 
+
+    user_answers = [parse_answer(ans) for ans in answers]
+    correct_answers = [diatonic.note2num(x) for x in interval]
+
+    if len(answers) < len(interval):
+        print("too few answers")
+    if len(answers) > len(interval):
+        print("too many answers")
+
+    print("Your answer:   ", " ".join([str(x) for x in user_answers]))
+    print("Correct Answer:", " ".join([str(x) for x in correct_answers]))
+
+    if all([x == y for x, y in zip(user_answers, correct_answers)]):
+        st.SCORE += 1
+        print("Good Job!")
+        print()
+    else:
+        print("It's ok, you'll get 'em next time.")
+        print()
+    time.sleep(st.DELAY)
 
 
-def intro_chord_tone():
-    intro(False)
+def new_question_interval():
+    
+
+    if st.NEWQUESTION:
+        if st.COUNT:
+            print("score: {} / {} = {:.2%}"
+                  "".format(st.SCORE, st.COUNT, st.SCORE/st.COUNT))
+        st.COUNT += 1
+
+        # Pick Ioctave
+        if st.MANY_OCTAVES:
+            Ioctave = random.choice(st.OCTAVES)
+        else:
+            Ioctave = st.DEFAULT_IOCTAVE
+
+        from musictools import Diatonic
+        diatonic = Diatonic(key=st.KEY, Ioctave=Ioctave)
+        
+        # pick first note
+        first_note = random.choice(diatonic.notes)
+
+        # pick second note
+        if st.INTERVAL_MODE == 'triads':
+            number = random.choice([1, 3, 5])
+            interval = diatonic.interval(number, root=first_note, 
+                ascending=True)
+        elif st.INTERVAL_MODE == 'sevenths':
+            number = random.choice([1, 3, 5, 7])
+            interval = diatonic.interval(number, root=first_note, 
+                ascending=True)
+        elif st.INTERVAL_MODE == 'ascending':
+            number = random.choice(st.INTERVALS)
+            interval = diatonic.interval(number, root=first_note, 
+                ascending=True)
+        elif st.INTERVAL_MODE == 'descending':
+            number = random.choice(st.INTERVALS)
+            interval = diatonic.interval(number, root=first_note, 
+                ascending=False)
+        elif st.INTERVAL_MODE == 'mixed':
+            number = random.choice(st.INTERVALS)
+            interval = diatonic.interval(number, root=first_note, 
+                ascending=bool(random.choice([0, 1])))
+        else:
+            raise Exception("Can't understand.  st.INTERVAL_MODE = {}"
+                            "".format(st.INTERVAL_MODE))
+
+        # store question info
+        st.CURRENT_Q_INFO = {'interval': interval,
+                             'Ioctave': Ioctave,
+                             'diatonic': diatonic}
+
+    else:
+        interval = st.CURRENT_Q_INFO['interval']
+        Ioctave = st.CURRENT_Q_INFO['Ioctave']
+        diatonic = st.CURRENT_Q_INFO['diatonic']
+
+    # Play interval
+    fluidsynth.play_NoteContainer(interval)
+
+    # Request user's answer
+    ans = input("Enter 1-7 or note names separated by spaces: ").strip()
+
+    if ans in menu_commands:
+        menu_commands[ans].action()
+    else:
+        eval_interval(ans, interval, diatonic)
+    return
 
 
-# New Question Functions
+###############################################################################   
+### single chord ##############################################################
+###############################################################################
+
+
 @new_question
 def eval_single_chord(usr_ans, correct_numeral, root_note):
     correct_ = False
@@ -237,6 +365,11 @@ def new_question_single_chord():
         else:
             print("User input not understood.  Please try again.")
     return
+
+
+###############################################################################   
+### progession ################################################################
+###############################################################################
 
 
 @new_question
@@ -318,6 +451,11 @@ def new_question_progression():
 #     return ans == correct_ans
 
 
+###############################################################################   
+### chord tone ################################################################
+###############################################################################
+
+
 def resolve_chord_tone(chord, tone, Ioctave):
     # play_progression([numeral], st.KEY, Ioctave=Ioctave)
 
@@ -352,7 +490,7 @@ def resolve_chord_tone(chord, tone, Ioctave):
         fluidsynth.play_Note(tone)
         time.sleep(st.DELAY)
         arpeggiate()  # sets NEWQUESTION = False
-    
+
 
 def new_question_chord_tone():
     if st.NEWQUESTION:
@@ -436,8 +574,14 @@ def new_question_chord_tone():
     return
 
 
+###############################################################################   
+### game moodes ###############################################################
+###############################################################################
+
 game_modes = {
-    'single_chord': gs.GameMode(intro_single_chord, new_question_single_chord),
-    'progression': gs.GameMode(intro_progression, new_question_progression),
-    'chord_tone': gs.GameMode(intro_chord_tone, new_question_chord_tone),
+    'single_chord': gs.GameMode('single_chord', intro, new_question_single_chord),
+    'progression': gs.GameMode('progression', intro, new_question_progression),
+    'chord_tone': gs.GameMode('chord_tone', lambda: intro(play_cadence=False), 
+                                new_question_chord_tone),
+    'interval': gs.GameMode('interval', intro, new_question_interval),
     }
