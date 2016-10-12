@@ -40,7 +40,7 @@ def get_user_args():
 
     parser.add_argument(
         '-f', '--sound_font',
-        action='store_true',
+        action='store_const',
         default=os.path.join(os.path.dirname(__file__), "fluid-soundfont", "FluidR3 GM2-2.SF2"),
         help=("You can use this flag to specify a sound font (.sf2) file. "
               "By default ")

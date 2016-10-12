@@ -7,7 +7,7 @@ from getch import getch
 import game_structure as gs
 from musictools import (play_progression, random_progression, 
     random_key, isvalidnote, resolve_with_chords, chordname, 
-    random_chord)
+    random_chord, easy_play, play_wait)
 import settings as st
 
 # External Dependencies
@@ -17,7 +17,7 @@ from multiprocessing import Process
 from mingus.midi import fluidsynth  # requires FluidSynth is installed
 from mingus.core import progressions, intervals, chords as ch
 import mingus.core.notes as notes
-from mingus.containers import NoteContainer, Note
+from mingus.containers import NoteContainer, Note, Bar
 
 
 # Decorators
@@ -38,8 +38,8 @@ def new_question(func):
 # Menu Command Actions
 @repeat_question
 def play_cadence():
-    play_progression(st.CADENCE, st.KEY, delay=st.DELAY, Iup=st.I)
-    time.sleep(2 * st.DELAY)
+    play_progression(st.CADENCE, st.KEY, Iup=st.I)
+    # time.sleep(2 * st.DELAY)
 
 
 @repeat_question
@@ -85,9 +85,12 @@ def toggle_many_octaves():
 
 
 @repeat_question
-def arpeggiate(invert=False, descending=False, chord=None, delay=None):
-    if not delay:
-        delay = st.DELAY/2
+def arpeggiate(invert=False, descending=False, chord=None, bpm=None, durations=None):
+    if not bpm:
+        bpm = st.BPM
+
+    # if not delay:
+    #     delay = st.DELAY/2
 
     if chord:
         pass
@@ -105,9 +108,19 @@ def arpeggiate(invert=False, descending=False, chord=None, delay=None):
     elif descending:
         arpeggiation.reverse()
 
-    for x in arpeggiation:
-        fluidsynth.play_Note(x)
-        time.sleep(delay)
+    # Play
+    easy_play(arpeggiation, durations, bpm)
+    play_wait()  # play wait
+    # bar = Bar()
+    # if not durations:
+    #     durations = [4]*len(arpeggiation)
+    # for x, d in zip(arpeggiation, durations):
+    #     bar.place_notes(x, d)
+    # fluidsynth.play_Bar(bar, bpm=bpm)
+
+    # for x in arpeggiation:
+    #     fluidsynth.play_Note(x)
+    #     time.sleep(delay)
 
 def change_mode_settings(mode):
 
@@ -183,9 +196,10 @@ def intro(play_cadence=True):
 
     # Play cadence
     if play_cadence:
-        play_progression(st.CADENCE, st.KEY, delay=st.DELAY, Iup=st.I)
-        time.sleep(st.DELAY)
-    time.sleep(st.DELAY)
+        play_progression(st.CADENCE, st.KEY, Iup=st.I)
+        play_wait()
+        # time.sleep(st.DELAY)
+    # time.sleep(st.DELAY)
     return
 
 
@@ -291,7 +305,7 @@ def new_question_interval():
         diatonic = st.CURRENT_Q_INFO['diatonic']
 
     # Play interval
-    fluidsynth.play_NoteContainer(interval)
+    easy_play(interval)
 
     # Request user's answer
     ans = input("Enter 1-7 or note names separated by spaces: ").strip()
@@ -359,14 +373,14 @@ def new_question_single_chord():
                 print("Yes!", chordname(chord, numeral))
                 if st.RESOLVE_WHEN_CORRECT:
                     resolve_with_chords(numeral, key=st.KEY, Ioctave=Ioctave, 
-                        numerals=st.NUMERALS, delay=st.DELAY / 2)
-                    time.sleep(st.DELAY)
+                        numerals=st.NUMERALS, bpm=st.BPM*2)
+                    play_wait()
             else:
                 print("No!", chordname(chord, numeral))
                 if st.RESOLVE_WHEN_INCORRECT:
                     resolve_with_chords(numeral, key=st.KEY, Ioctave=Ioctave, 
-                        numerals=st.NUMERALS, delay=st.DELAY / 2)
-                    time.sleep(st.DELAY)
+                        numerals=st.NUMERALS, bpm=st.BPM*2)
+                    play_wait()
         else:
             print("User input not understood.  Please try again.")
     return
@@ -409,7 +423,8 @@ def eval_progression(ans, prog, prog_strums):
     else:
         print("It's ok, you'll get 'em next time.")
         print()
-    time.sleep(st.DELAY)
+    # time.sleep(st.DELAY)
+    play_wait()
 
 
 def new_question_progression():
@@ -429,7 +444,7 @@ def new_question_progression():
         prog_strums = st.CURRENT_Q_INFO['prog_strums']
 
     # Play chord/progression
-    play_progression(prog_strums, st.KEY, delay=st.DELAY)
+    play_progression(prog_strums, st.KEY)
 
     # Request user's answer
     ans = input("Enter your answer using root note names "
