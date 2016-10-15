@@ -35,13 +35,15 @@ def get_user_args():
         '-s', '--sevenths',
         action='store_true',
         default=False,
-        help='If this flag is included, sevenths will be used instead of triads.'
+        help='If this flag is included, sevenths will be used instead of '
+            'triads.'
         )
 
     parser.add_argument(
         '-f', '--sound_font',
-        action='store_const',
-        default=os.path.join(os.path.dirname(__file__), "fluid-soundfont", "FluidR3 GM2-2.SF2"),
+        action='store_true',
+        default=os.path.join(os.path.dirname(__file__), "fluid-soundfont", 
+                "FluidR3 GM2-2.SF2"),
         help=("You can use this flag to specify a sound font (.sf2) file. "
               "By default ")
         )
@@ -66,7 +68,8 @@ else:
     KEY = user_args.key.upper()
 
 if user_args.sevenths:
-    [I, II, III, IV, V, VI, VII] = ["I7", "II7", "III7", "IV7", "V7", "VI7", "VII7"]
+    [I, II, III, IV, V, VI, VII] = ["I7", "II7", "III7", "IV7", "V7", "VI7", 
+                                    "VII7"]
     TONES = [1, 3, 5, 7]
 else:
     [I, II, III, IV, V, VI, VII] = ["I", "II", "III", "IV", "V", "VI", "VII"]
@@ -76,7 +79,8 @@ CADENCE = [I, IV, V, I]
 NUMERALS = [I, II, III, IV, V, VI, VII]
 
 if not notes.is_valid_note(KEY):
-    print("ATTENTION: User-input key, {}, not valid, using C Major instead.".format(KEY))
+    print("ATTENTION: User-input key, {}, not valid, using C Major "
+            "instead.".format(KEY))
     KEY = "C"
 
 # Other user args
