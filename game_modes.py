@@ -82,6 +82,7 @@ def set_key(reset_score=True):
 @repeat_question
 def toggle_many_octaves():
     st.MANY_OCTAVES = not st.MANY_OCTAVES
+    print("MANY_OCTAVE : {}".format(st.MANY_OCTAVES))
 
 
 @repeat_question
