@@ -85,8 +85,9 @@ if not notes.is_valid_note(KEY):
 
 # Other user args
 MANY_OCTAVES = user_args.many_octaves
-DELAY = user_args.delay
+# DELAY = user_args.delay
 PROGRESSION_MODE = False
+BPM = 60 * user_args.delay
 
 # Other args that should be user-adjustable, but aren't yet
 PROG_LENGTHS = range(2, 5)  # Number of strums in a progression
@@ -95,13 +96,14 @@ RESOLVE_WHEN_INCORRECT = True
 RESOLVE_WHEN_CORRECT = True
 ARPEGGIATE_WHEN_CORRECT = True
 ARPEGGIATE_WHEN_INCORRECT = True
-INTERVALS=[1, 3, 5]
-INTERVAL_MODE = "mixed"
-BPM = 60
-
+INTERVALS = [2, 3, 4, 5, 6, 7, 8]
+INTERVAL_MODE = "ascending"
+HARMONIC_INTERVALS = False  # if false 'interval' mode will play melodic ints
 OCTAVES = range(1, 8)  # if many_octaves flag invoked
 DEFAULT_IOCTAVE = 4
 INITIAL_MODE = 'interval'
+FIXED_ROOT = 0  # Fix root of interval, 0 for unfixed
+NAME_INTERVAL = False
 
 # Inelegant storage
 NEWQUESTION = True

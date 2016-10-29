@@ -36,8 +36,10 @@ def random_chord():
 
 
 class Diatonic(object):
-    def __init__(self, key, Ioctave):
+    def __init__(self, key, Ioctave=None):
         self.key = key
+        if not Ioctave:
+            Ioctave = Note(key).octave
         self.Ioctave = Ioctave
 
         if key[0] == key[0].lower():  # natural minor
@@ -62,6 +64,9 @@ class Diatonic(object):
             self.rel_semitones[(number - 1) % 8] + 12*((number - 1)//8)
         return relsemi2note(rel_semi)
 
+    def num2semidist(self, num):
+        return 12*(num//7) + self.rel_semitones[num % 7 - 1]
+
     def relsemi2note(self, rel_semi):
         return Note().from_int(int(self.tonic) + rel_semi)
 
@@ -80,12 +85,11 @@ class Diatonic(object):
 
         root_idx = self.notes.index(root) + 1
         if ascending:
-            second_note_idx = (root_idx + (number - 1)) % len(self.notes)
+            second_note = Note().from_int(int(root) + self.num2semidist(number))
         else:
-            second_note_idx = (root_idx - (number - 1)) % len(self.notes)
-        second_note = self.notes[second_note_idx]
+            second_note = Note().from_int(int(root) - self.num2semidist(number))
 
-        return NoteContainer(sorted([root, second_note]))
+        return NoteContainer([root, second_note])
 
     def random_note(self):
         return random.choice(self.notes)

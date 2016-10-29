@@ -12,6 +12,7 @@ import settings as st
 
 # External Dependencies
 import time, random, sys
+from copy import copy
 from collections import OrderedDict
 from multiprocessing import Process
 from mingus.midi import fluidsynth  # requires FluidSynth is installed
@@ -38,13 +39,19 @@ def new_question(func):
 # Menu Command Actions
 @repeat_question
 def play_cadence():
-    play_progression(st.CADENCE, st.KEY, Iup=st.I)
+    play_progression(st.CADENCE, st.KEY, Iup=st.I, bpm=st.BPM)
+    play_wait()
     # time.sleep(2 * st.DELAY)
 
 
+# @repeat_question
+# def set_delay():
+#     st.DELAY = float(input("Enter the desired delay time (in seconds): "))
+
+
 @repeat_question
-def set_delay():
-    st.DELAY = float(input("Enter the desired delay time (in seconds): "))
+def set_bpm():
+    st.BPM = float(input("Enter the desired BPM: "))
 
 
 @new_question
@@ -161,7 +168,7 @@ def toggle_alt_chord_tone_res():
 
 menu_commands = [
     gs.MenuCommand("v", "hear the cadence", play_cadence),
-    gs.MenuCommand("w", "change the delay between chords", set_delay),
+    gs.MenuCommand("w", "change the BPM", set_bpm),
     gs.MenuCommand("s", "toggle between hearing triads and hearing seventh chords", toggle_triads7ths),
     gs.MenuCommand("k", "change the key", set_key),
     gs.MenuCommand("o", "toggle between using one octave or many", toggle_many_octaves),
@@ -208,6 +215,26 @@ def intro(play_cadence=True):
 ### Interval ##################################################################
 ###############################################################################
 
+@new_question
+def eval_interval_name(user_answer, interval, diatonic):
+    semitone_distance = int(interval[1]) - int(interval[0])
+    names = ['8', '2b', '2','3b', '3', '4', '5b', '5', '6b', '6', '7b', '7']
+    correct_answer = names[semitone_distance % 12]
+
+    user_answer = user_answer.strip()
+    print("Your answer:   ", user_answer)
+    print("Correct Answer:", correct_answer)
+    note_nums = [diatonic.note2num(x) for x in interval]
+    print("Interval Notes:", " ".join([str(x) for x in note_nums]))
+    if user_answer == correct_answer:
+        st.SCORE += 1
+        print("Good Job!")
+        print()
+    else:
+        print("It's ok, you'll get 'em next time.")
+        print()
+    play_wait()
+
 
 @new_question
 def eval_interval(ans, interval, diatonic):
@@ -239,6 +266,21 @@ def eval_interval(ans, interval, diatonic):
     print("Your answer:   ", " ".join([str(x) for x in user_answers]))
     print("Correct Answer:", " ".join([str(x) for x in correct_answers]))
 
+    ###debug (safe to delete)
+    try: 
+        semitone_distance = int(interval[1]) - int(interval[0])
+    except:
+        print()
+        print(interval)
+        print()
+        raise
+    ###end of debug (safe to delete)
+
+
+    semitone_distance = int(interval[1]) - int(interval[0])
+    names = ['8', '2b', '2','3b', '3', '4', '5b', '5', '6b', '6', '7b', '7']
+    print("Interval:", names[semitone_distance % 12])
+
     if all([x == y for x, y in zip(user_answers, correct_answers)]):
         st.SCORE += 1
         print("Good Job!")
@@ -246,12 +288,10 @@ def eval_interval(ans, interval, diatonic):
     else:
         print("It's ok, you'll get 'em next time.")
         print()
-    time.sleep(st.DELAY)
+    play_wait()
 
 
 def new_question_interval():
-    
-
     if st.NEWQUESTION:
         if st.COUNT:
             print("score: {} / {} = {:.2%}"
@@ -268,32 +308,41 @@ def new_question_interval():
         diatonic = Diatonic(key=st.KEY, Ioctave=Ioctave)
         
         # pick first note
-        first_note = random.choice(diatonic.notes)
+        if st.FIXED_ROOT:
+            first_note = diatonic.notes[st.FIXED_ROOT - 1]
+        else:
+            first_note = random.choice(diatonic.notes)
 
         # pick second note
         if st.INTERVAL_MODE == 'triads':
-            number = random.choice([1, 3, 5])
+            number = random.choice([3, 5, 8])
             interval = diatonic.interval(number, root=first_note, 
                 ascending=True)
         elif st.INTERVAL_MODE == 'sevenths':
-            number = random.choice([1, 3, 5, 7])
+            number = random.choice([3, 5, 7, 8])
             interval = diatonic.interval(number, root=first_note, 
                 ascending=True)
         elif st.INTERVAL_MODE == 'ascending':
             number = random.choice(st.INTERVALS)
             interval = diatonic.interval(number, root=first_note, 
                 ascending=True)
-        elif st.INTERVAL_MODE == 'descending':
+        elif st.INTERVAL_MODE == 'descending':  # redundant for harmonic intrvls
             number = random.choice(st.INTERVALS)
             interval = diatonic.interval(number, root=first_note, 
                 ascending=False)
-        elif st.INTERVAL_MODE == 'mixed':
+        elif st.INTERVAL_MODE == 'mixed':  # redundant for harmonic intervals
             number = random.choice(st.INTERVALS)
             interval = diatonic.interval(number, root=first_note, 
                 ascending=bool(random.choice([0, 1])))
         else:
             raise Exception("Can't understand.  st.INTERVAL_MODE = {}"
                             "".format(st.INTERVAL_MODE))
+
+        # change Unison intervals to P8 intervals
+        if len(interval) == 1:
+            P8 = copy(interval[0])
+            P8.octave += 1
+            interval = NoteContainer([interval[0], P8])
 
         # store question info
         st.CURRENT_Q_INFO = {'interval': interval,
@@ -306,7 +355,10 @@ def new_question_interval():
         diatonic = st.CURRENT_Q_INFO['diatonic']
 
     # Play interval
-    easy_play(interval)
+    if st.HARMONIC_INTERVALS:
+        easy_play(interval)
+    else:
+        easy_play([x for x in interval])
 
     # Request user's answer
     ans = input("Enter 1-7 or note names separated by spaces: ").strip()
@@ -314,7 +366,10 @@ def new_question_interval():
     if ans in menu_commands:
         menu_commands[ans].action()
     else:
-        eval_interval(ans, interval, diatonic)
+        if st.NAME_INTERVAL:
+            eval_interval_name(ans, interval, diatonic)
+        else:
+            eval_interval(ans, interval, diatonic)
     return
 
 
@@ -482,15 +537,15 @@ def resolve_chord_tone(chord, tone, Ioctave):
 
     if st.ALTERNATIVE_CHORD_TONE_RESOLUTION == 1:
         fluidsynth.play_NoteContainer(chord)
-        time.sleep(st.DELAY)
+        play_wait()
         fluidsynth.play_Note(tone)
-        time.sleep(st.DELAY)
+        play_wait()
         root = chord[0]
         interval = NoteContainer([root, tone])
         fluidsynth.play_NoteContainer(interval)
     elif st.ALTERNATIVE_CHORD_TONE_RESOLUTION == 2:
         fluidsynth.play_NoteContainer(chord)
-        time.sleep(st.DELAY)
+        play_wait()
         tone_idx = [x for x in chord].index(tone)
         if tone_idx == 0:
             arpeggiate()
@@ -507,9 +562,9 @@ def resolve_chord_tone(chord, tone, Ioctave):
         # fluidsynth.play_Note(Iup_note)
     else:
         fluidsynth.play_NoteContainer(chord)
-        time.sleep(st.DELAY)
+        play_wait()
         fluidsynth.play_Note(tone)
-        time.sleep(st.DELAY)
+        play_wait()
         arpeggiate()  # sets NEWQUESTION = False
 
 
@@ -539,7 +594,7 @@ def new_question_chord_tone():
     # Play chord, then tone
     def playfcn():
         play_progression([numeral], st.KEY, Ioctave=Ioctave)
-        time.sleep(st.DELAY)
+        play_wait()
         fluidsynth.play_Note(tone)
     p = Process(target=playfcn())
     p.start()
@@ -568,13 +623,13 @@ def new_question_chord_tone():
                 print("Yes! The {} tone of".format(correct_ans), chordname(chord, numeral))
                 if st.ARPEGGIATE_WHEN_CORRECT:
                     resolve_chord_tone(chord, tone, Ioctave)
-                    time.sleep(st.DELAY)
+                    play_wait()
                     st.NEWQUESTION = True
             else:
                 print("No! The {} tone of".format(correct_ans), chordname(chord, numeral))
                 if st.ARPEGGIATE_WHEN_INCORRECT:
                     resolve_chord_tone(chord, tone, Ioctave)
-                    time.sleep(st.DELAY)
+                    play_wait()
                     st.NEWQUESTION = True
 
         # secret option
@@ -583,10 +638,10 @@ def new_question_chord_tone():
             for num in st.NUMERALS:
                 num_chord = NoteContainer(progressions.to_chords([num], st.KEY)[0])
                 play_progression([num], st.KEY, Ioctave=Ioctave)
-                time.sleep(st.DELAY)
+                play_wait()
                 fluidsynth.play_Note(num_chord[tone_idx])
-                time.sleep(st.DELAY)
-            time.sleep(st.DELAY)
+                play_wait()
+            play_wait()
             st.NEWQUESTION = False
 
         else:
