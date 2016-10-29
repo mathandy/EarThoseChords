@@ -62,10 +62,7 @@ class Diatonic(object):
         self.rel_semitones[(number - 1) % 8]
         rel_semi = \
             self.rel_semitones[(number - 1) % 8] + 12*((number - 1)//8)
-        return relsemi2note(rel_semi)
-
-    def num2semidist(self, num):
-        return 12*(num//7) + self.rel_semitones[num % 7 - 1]
+        return self.relsemi2note(rel_semi)
 
     def relsemi2note(self, rel_semi):
         return Note().from_int(int(self.tonic) + rel_semi)
@@ -76,20 +73,39 @@ class Diatonic(object):
         try:
             return base_semitones.index(note_base_semi) + 1
         except:
-            raise ValueError("{} is not a note in {}.".format(note.name, self.keyname)) 
+            raise ValueError("{} is not a note in {}.".format(note.name, 
+                                self.keyname))
+
+    def nums2semidist(self, num1, num2):
+        assert 1 <= num1 <= 7
+        assert 1 <= num2 <= 7
+        return abs(int(self.num2note(num2)) - int(self.num2note(num1)))
+
 
     def interval(self, number, root=None, ascending=True):
         assert number > 0
         if not root:
             root = self.notes[0]
 
-        root_idx = self.notes.index(root) + 1
+        root_num = self.note2num(root)
         if ascending:
-            second_note = Note().from_int(int(root) + self.num2semidist(number))
+            second_note_num = (self.note2num(root) + (number - 1)) % 7
+            if second_note_num == 0:
+                second_note_num = 7
+            semi_dist = self.nums2semidist(root_num, second_note_num)
+            if second_note_num < root_num:
+                semi_dist = 12 - semi_dist
+            second_note_int  = int(root) + semi_dist + 12*((number-1)//7)
         else:
-            second_note = Note().from_int(int(root) - self.num2semidist(number))
+            second_note_num = (self.note2num(root) - (number - 1)) % 7
+            if second_note_num == 0:
+                second_note_num = 7
+            semi_dist = self.nums2semidist(root_num, second_note_num)
+            if second_note_num > root_num:
+                semi_dist = 12 - semi_dist
+            second_note_int  = int(root) - semi_dist - 12*((number-1)//7)
 
-        return NoteContainer([root, second_note])
+        return NoteContainer(sorted([root, Note().from_int(second_note_int)]))
 
     def random_note(self):
         return random.choice(self.notes)
@@ -158,7 +174,8 @@ def play_wait(duration=4):
 def play_progression(prog, key, octaves=None, Ioctave=4, Iup = "I", bpm=None):
     """ Converts a progression to chords and plays them using fluidsynth.
     Iup will be played an octave higher than other numerals by default.
-    Set Ioctave to fall for no octave correction from mingus default behavior."""
+    Set Ioctave to fall for no octave correction from mingus default behavior.
+    """
     if octaves:
         assert len(prog) == len(octaves)
 
