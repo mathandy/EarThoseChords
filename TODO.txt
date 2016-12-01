@@ -1,4 +1,0 @@
-new mode similar to chord tone, but where you hear the 1, 3, 5 arpeggio and identify the tones by distance from tonic. 
-
-2 notes in key, ask for interval name
-~then 3,4 notes in key ask for triad/chord name

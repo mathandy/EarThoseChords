@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 """
 Author: Andy Port
 Website: https://github.com/mathandy/EarThoseChords
@@ -49,9 +51,7 @@ def eval_single(usr_ans, question, root_note):
             pass
     return correct_
 
-
-# Play the Game!!!
-if __name__ == '__main__':
+def main():
     # Initialize
     import settings as st # parses command-line user arguments and initializes settings
     fluidsynth.init(st.SOUNDFONT)  # start FluidSynth
@@ -66,3 +66,8 @@ if __name__ == '__main__':
 
     while 1:
         st.CURRENT_MODE.new_question()
+
+# Play the Game!!!
+if __name__ == '__main__':
+    main()
+

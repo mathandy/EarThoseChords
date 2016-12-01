@@ -11,7 +11,7 @@ import time, random
 from mingus.midi import fluidsynth  # requires FluidSynth is installed
 from mingus.core import progressions, intervals, chords as ch
 import mingus.core.notes as notes
-from mingus.containers import NoteContainer, Note
+from mingus.containers import NoteContainer, Note, Bar
 
 
 def random_chord():
@@ -36,8 +36,10 @@ def random_chord():
 
 
 class Diatonic(object):
-    def __init__(self, key, Ioctave):
+    def __init__(self, key, Ioctave=None):
         self.key = key
+        if not Ioctave:
+            Ioctave = Note(key).octave
         self.Ioctave = Ioctave
 
         if key[0] == key[0].lower():  # natural minor
@@ -60,7 +62,7 @@ class Diatonic(object):
         self.rel_semitones[(number - 1) % 8]
         rel_semi = \
             self.rel_semitones[(number - 1) % 8] + 12*((number - 1)//8)
-        return relsemi2note(rel_semi)
+        return self.relsemi2note(rel_semi)
 
     def relsemi2note(self, rel_semi):
         return Note().from_int(int(self.tonic) + rel_semi)
@@ -71,21 +73,39 @@ class Diatonic(object):
         try:
             return base_semitones.index(note_base_semi) + 1
         except:
-            raise ValueError("{} is not a note in {}.".format(note.name, self.keyname)) 
+            raise ValueError("{} is not a note in {}.".format(note.name, 
+                                self.keyname))
+
+    def nums2semidist(self, num1, num2):
+        assert 1 <= num1 <= 7
+        assert 1 <= num2 <= 7
+        return abs(int(self.num2note(num2)) - int(self.num2note(num1)))
+
 
     def interval(self, number, root=None, ascending=True):
         assert number > 0
         if not root:
             root = self.notes[0]
 
-        root_idx = self.notes.index(root) + 1
+        root_num = self.note2num(root)
         if ascending:
-            second_note_idx = (root_idx + (number - 1)) % len(self.notes)
+            second_note_num = (self.note2num(root) + (number - 1)) % 7
+            if second_note_num == 0:
+                second_note_num = 7
+            semi_dist = self.nums2semidist(root_num, second_note_num)
+            if second_note_num < root_num:
+                semi_dist = 12 - semi_dist
+            second_note_int  = int(root) + semi_dist + 12*((number-1)//7)
         else:
-            second_note_idx = (root_idx - (number - 1)) % len(self.notes)
-        second_note = self.notes[second_note_idx]
+            second_note_num = (self.note2num(root) - (number - 1)) % 7
+            if second_note_num == 0:
+                second_note_num = 7
+            semi_dist = self.nums2semidist(root_num, second_note_num)
+            if second_note_num > root_num:
+                semi_dist = 12 - semi_dist
+            second_note_int  = int(root) - semi_dist - 12*((number-1)//7)
 
-        return NoteContainer(sorted([root, second_note]))
+        return NoteContainer(sorted([root, Note().from_int(second_note_int)]))
 
     def random_note(self):
         return random.choice(self.notes)
@@ -122,10 +142,40 @@ def random_key(output_on=True):
 
     return key
 
-def play_progression(prog, key, octaves=None, Ioctave=4, Iup = "I", delay=1.0):
+
+def easy_bar(notes, durations=None):
+    _default_note_duration = 4
+    if not durations and notes is not None:
+        durations = [_default_note_duration]*len(notes)
+
+    # setup Bar object
+    bar = Bar()
+    if (isinstance(notes, NoteContainer) or 
+            isinstance(notes, Note) or notes is None):
+        bar.place_notes(notes, _default_note_duration)
+    elif notes is None:
+        bar.place_notes(notes, _default_note_duration)
+    else:
+        for x, d in zip(notes, durations):
+            bar.place_notes(x, d)
+    return bar
+
+def easy_play(notes, durations=None, bpm=None):
+    """`notes` should be a list of notes and/or note_containers.
+    durations will all default to 4 (quarter notes).
+    bpm will default current BPM setting, `st.BPM`."""
+    if not bpm:
+        bpm = st.BPM
+    fluidsynth.play_Bar(easy_bar(notes, durations), bpm=bpm)
+
+def play_wait(duration=4):
+    easy_play([None], [duration])
+
+def play_progression(prog, key, octaves=None, Ioctave=4, Iup = "I", bpm=None):
     """ Converts a progression to chords and plays them using fluidsynth.
     Iup will be played an octave higher than other numerals by default.
-    Set Ioctave to fall for no octave correction from mingus default behavior."""
+    Set Ioctave to fall for no octave correction from mingus default behavior.
+    """
     if octaves:
         assert len(prog) == len(octaves)
 
@@ -161,13 +211,10 @@ def play_progression(prog, key, octaves=None, Ioctave=4, Iup = "I", delay=1.0):
 
         chords.append(chord)
 
-    for i, chord in enumerate(chords):
-        fluidsynth.play_NoteContainer(chord)
-        if i != len(chords) - 1:
-            time.sleep(delay)
+    easy_play(chords, bpm=bpm)
 
 
-def resolve_with_chords(num2res, key, Ioctave, numerals, delay=0.5):
+def resolve_with_chords(num2res, key, Ioctave, numerals, bpm=None):
     """"Note: only relevant for major scale triads."""
     [I, II, III, IV, V, VI, VII] = numerals
 
@@ -182,7 +229,7 @@ def resolve_with_chords(num2res, key, Ioctave, numerals, delay=0.5):
     }
 
     res = resdict[num2res]
-    play_progression(res, key, Ioctave=Ioctave, delay=delay, Iup=I)
+    play_progression(res, key, Ioctave=Ioctave, Iup=I, bpm=bpm)
     return res
 
 

@@ -35,13 +35,15 @@ def get_user_args():
         '-s', '--sevenths',
         action='store_true',
         default=False,
-        help='If this flag is included, sevenths will be used instead of triads.'
+        help='If this flag is included, sevenths will be used instead of '
+            'triads.'
         )
 
     parser.add_argument(
         '-f', '--sound_font',
         action='store_true',
-        default=os.path.join(os.path.dirname(__file__), "fluid-soundfont", "FluidR3 GM2-2.SF2"),
+        default=os.path.join(os.path.dirname(__file__), "fluid-soundfont", 
+                "FluidR3 GM2-2.SF2"),
         help=("You can use this flag to specify a sound font (.sf2) file. "
               "By default ")
         )
@@ -66,7 +68,8 @@ else:
     KEY = user_args.key.upper()
 
 if user_args.sevenths:
-    [I, II, III, IV, V, VI, VII] = ["I7", "II7", "III7", "IV7", "V7", "VI7", "VII7"]
+    [I, II, III, IV, V, VI, VII] = ["I7", "II7", "III7", "IV7", "V7", "VI7", 
+                                    "VII7"]
     TONES = [1, 3, 5, 7]
 else:
     [I, II, III, IV, V, VI, VII] = ["I", "II", "III", "IV", "V", "VI", "VII"]
@@ -76,13 +79,15 @@ CADENCE = [I, IV, V, I]
 NUMERALS = [I, II, III, IV, V, VI, VII]
 
 if not notes.is_valid_note(KEY):
-    print("ATTENTION: User-input key, {}, not valid, using C Major instead.".format(KEY))
+    print("ATTENTION: User-input key, {}, not valid, using C Major "
+            "instead.".format(KEY))
     KEY = "C"
 
 # Other user args
 MANY_OCTAVES = user_args.many_octaves
-DELAY = user_args.delay
+# DELAY = user_args.delay
 PROGRESSION_MODE = False
+BPM = 60 * user_args.delay
 
 # Other args that should be user-adjustable, but aren't yet
 PROG_LENGTHS = range(2, 5)  # Number of strums in a progression
@@ -91,13 +96,14 @@ RESOLVE_WHEN_INCORRECT = True
 RESOLVE_WHEN_CORRECT = True
 ARPEGGIATE_WHEN_CORRECT = True
 ARPEGGIATE_WHEN_INCORRECT = True
-INTERVALS=[1, 3, 5]
-INTERVAL_MODE = "mixed"
-BPM = 60
-
+INTERVALS = [2, 3, 4, 5, 6, 7, 8]
+INTERVAL_MODE = "ascending"
+HARMONIC_INTERVALS = False  # if false 'interval' mode will play melodic ints
 OCTAVES = range(1, 8)  # if many_octaves flag invoked
 DEFAULT_IOCTAVE = 4
 INITIAL_MODE = 'interval'
+FIXED_ROOT = 0  # Fix root of interval, 0 for unfixed
+NAME_INTERVAL = False
 
 # Inelegant storage
 NEWQUESTION = True
