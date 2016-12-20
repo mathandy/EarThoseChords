@@ -71,4 +71,4 @@ Contact me, AndyAPort@gmail.com
 Licence
 -------
 
-This module is under an MIT License.
+This code is available for reuse under the Apache License.
