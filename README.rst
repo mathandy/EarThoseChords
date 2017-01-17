@@ -1,7 +1,7 @@
 EarThoseChords
 ==============
 
-EarThoseChords is a tool to help musicians learn to recognized the root of chords based on it's distance from the tonic of the key.  The motivation for this code came from the success the author has had learning melodic dictation using Alain Benbassat's method as found in the Android App "Functional Ear Trainer" by Serhii Korchan.  
+EarThoseChords is a tool to help musicians learn to recognize the root of chords based on it's distance from the tonic of the key.  The motivation for this code came from the success the author has had learning melodic dictation using Alain Benbassat's method as found in the Android App "Functional Ear Trainer" by Serhii Korchan.  
 If you enjoy this software, please consider making a donation to Alain Benbassat on his website www.miles.be.
 
 To Run
