@@ -235,7 +235,7 @@ def intro(play_cadence=True):
 @new_question
 def eval_interval_name(user_answer, interval, diatonic):
     semitone_distance = int(interval[1]) - int(interval[0])
-    names = ['8', '2b', '2','3b', '3', '4', '5b', '5', '6b', '6', '7b', '7']
+    names = ['8', '2b', '2', '3b', '3', '4', '5b', '5', '6b', '6', '7b', '7']
     correct_answer = names[semitone_distance % 12]
 
     user_answer = user_answer.strip()
@@ -260,7 +260,6 @@ def eval_interval(ans, interval, diatonic):
         answers = [x for x in ans]
     except:
         answers = ans.split(" ")
-
 
     def parse_answer(ans):
         try:
